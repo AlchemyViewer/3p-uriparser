@@ -95,9 +95,20 @@ pushd "$URIPARSER_SOURCE_DIR"
             # So, clear out bits that shouldn't affect our configure-directed build
             # but which do nonetheless.
             #
-            # unset DISTCC_HOSTS CC CXX CFLAGS CPPFLAGS CXXFLAGS
-
-            opts="${TARGET_OPTS:--m$AUTOBUILD_ADDRSIZE $LL_BUILD_RELEASE}"
+            unset DISTCC_HOSTS CC CXX CFLAGS CPPFLAGS CXXFLAGS
+        
+            # Default target per --address-size
+            opts="${TARGET_OPTS:--m$AUTOBUILD_ADDRSIZE}"
+            DEBUG_COMMON_FLAGS="$opts -Og -g -fPIC"
+            RELEASE_COMMON_FLAGS="$opts -O3 -g -fPIC -fstack-protector-strong"
+            DEBUG_CFLAGS="$DEBUG_COMMON_FLAGS"
+            RELEASE_CFLAGS="$RELEASE_COMMON_FLAGS"
+            DEBUG_CXXFLAGS="$DEBUG_COMMON_FLAGS -std=c++17"
+            RELEASE_CXXFLAGS="$RELEASE_COMMON_FLAGS -std=c++17"
+            DEBUG_CPPFLAGS="-DPIC"
+            RELEASE_CPPFLAGS="-DPIC -D_FORTIFY_SOURCE=2"
+        
+            JOBS=`cat /proc/cpuinfo | grep processor | wc -l`
 
             # Handle any deliberate platform targeting
             if [ -z "${TARGET_CPPFLAGS:-}" ]; then
@@ -108,18 +119,41 @@ pushd "$URIPARSER_SOURCE_DIR"
                 export CPPFLAGS="$TARGET_CPPFLAGS"
             fi
 
-            # generate configure script
-            ./autogen.sh
+            # Debug
+            mkdir -p "build_debug"
+            pushd "build_debug"
+                CFLAGS="$DEBUG_CFLAGS" \
+                CXXFLAGS="$DEBUG_CXXFLAGS" \
+                CPPFLAGS="$DEBUG_CPPFLAGS" \
+                    cmake ../ -G"Unix Makefiles" -DBUILD_SHARED_LIBS=FALSE -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
+                        -DCMAKE_INSTALL_PREFIX="$stage"
+
+                make -j$JOBS
+                make install
+
+                mkdir -p ${stage}/lib/debug
+                mv ${stage}/lib/*.a ${stage}/lib/debug
+                mkdir -p ${stage}/lib/debug/pkgconfig
+                cp $top/pkgconfig/liburiparser-debug.pc ${stage}/lib/debug/pkgconfig/liburiparser.pc
+            popd
 
             # Release
-            CFLAGS="$opts" CXXFLAGS="$opts" \
-                ./configure --prefix="$stage" \
-                --includedir="$stage/include" --libdir="$stage/lib/release" --disable-test
-            make
-            make install
+            mkdir -p "build_release"
+            pushd "build_release"
+                CFLAGS="$RELEASE_CFLAGS" \
+                CXXFLAGS="$RELEASE_CXXFLAGS" \
+                CPPFLAGS="$RELEASE_CPPFLAGS" \
+                    cmake ../ -G"Unix Makefiles" -DBUILD_SHARED_LIBS=FALSE -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
+                        -DCMAKE_INSTALL_PREFIX="$stage"
 
-            # clean the build artifacts
-            make distclean
+                make -j$JOBS
+                make install
+
+                mkdir -p ${stage}/lib/release
+                mv ${stage}/lib/*.a ${stage}/lib/release
+                mkdir -p ${stage}/lib/release/pkgconfig
+                cp $top/pkgconfig/liburiparser-release.pc ${stage}/lib/release/pkgconfig/liburiparser.pc
+            popd
         ;;
     esac
     mkdir -p "$stage/LICENSES"

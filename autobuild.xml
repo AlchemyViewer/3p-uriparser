@@ -4,7 +4,7 @@
     <key>package_description</key>
     <map>
       <key>canonical_repo</key>
-      <string>https://bitbucket.org/lindenlab/3p-uriparser</string>
+      <string>https://git.alchemyviewer.org/alchemy/thirdparty/3p-uriparser</string>
       <key>copyright</key>
       <string>Copyright (C) 2007, Weijia Song &lt;songweijia@gmail.com&gt;, Sebastian Pipping &lt;webmaster@hartwork.org&gt;</string>
       <key>description</key>
@@ -85,7 +85,10 @@
           </map>
           <key>manifest</key>
           <array>
+            <string>lib/debug/*.a</string>
+            <string>lib/debug/pkgconfig/*</string>
             <string>lib/release/*.a</string>
+            <string>lib/release/pkgconfig/*</string>
           </array>
           <key>name</key>
           <string>linux</string>
