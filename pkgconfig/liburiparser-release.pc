@@ -1,0 +1,12 @@
+prefix=${AUTOBUILD_PACKAGES_DIR}
+exec_prefix=${prefix}
+libdir=${prefix}/lib/release
+includedir=${prefix}/include
+
+Name: liburiparser
+Description: URI parsing and handling library
+
+Version: 0.9.4
+URL: https://uriparser.github.io/
+Libs: -L${libdir} -luriparser
+Cflags: -I${includedir}
