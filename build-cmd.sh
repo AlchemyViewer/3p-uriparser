@@ -99,8 +99,8 @@ pushd "$URIPARSER_SOURCE_DIR"
         
             # Default target per --address-size
             opts="${TARGET_OPTS:--m$AUTOBUILD_ADDRSIZE}"
-            DEBUG_COMMON_FLAGS="$opts -Og -g -fPIC"
-            RELEASE_COMMON_FLAGS="$opts -O3 -g -fPIC -fstack-protector-strong"
+            DEBUG_COMMON_FLAGS="$opts -Og -g -fPIC -DPIC"
+            RELEASE_COMMON_FLAGS="$opts -O3 -g -fPIC -fstack-protector-strong -DPIC -D_FORTIFY_SOURCE=2"
             DEBUG_CFLAGS="$DEBUG_COMMON_FLAGS"
             RELEASE_CFLAGS="$RELEASE_COMMON_FLAGS"
             DEBUG_CXXFLAGS="$DEBUG_COMMON_FLAGS -std=c++17"
