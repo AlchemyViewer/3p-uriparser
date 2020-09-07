@@ -45,17 +45,57 @@ pushd "$URIPARSER_SOURCE_DIR"
             "$stage/version.exe" > "$stage/VERSION.txt"
             rm "$stage"/version.{obj,exe}
 
-            cmake . -G "$AUTOBUILD_WIN_CMAKE_GEN" \
-                  -DCMAKE_INSTALL_PREFIX:STRING="$(cygpath -w ${stage})" \
-                  -DCMAKE_CXX_FLAGS="$LL_BUILD_RELEASE" \
-                  -DCMAKE_C_FLAGS="$LL_BUILD_RELEASE"
+            if [ "$AUTOBUILD_ADDRSIZE" = 32 ]
+            then
+                archflags="/arch:SSE2"
+            else
+                archflags=""
+            fi
 
-            build_sln "uriparser.sln" "Release|$AUTOBUILD_WIN_VSPLATFORM" "uriparser"
-
-            mkdir -p "$stage/lib/release"
-            cp -a "Release/uriparser.lib" \
-                "$stage/lib/release/uriparser.lib"
             mkdir -p "$stage/include/uriparser"
+            mkdir -p "$stage/lib/debug"
+            mkdir -p "$stage/lib/release"
+
+            mkdir -p "build_debug"
+            pushd "build_debug"
+                # Invoke cmake and use as official build
+                cmake -E env CFLAGS="$archflags" CXXFLAGS="$archflags" LDFLAGS="/DEBUG:FULL" \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=ON \
+                    -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
+
+                cmake --build . --config Debug --clean-first
+
+                # conditionally run unit tests
+                if [ "${DISABLE_UNIT_TESTS:-0}" = "0" ]; then
+                    ctest -C Debug
+                fi
+
+                cp -a "Debug/uriparser.dll" "$stage/lib/debug/"
+                cp -a "Debug/uriparser.lib" "$stage/lib/debug/"
+                cp -a "Debug/uriparser.exp" "$stage/lib/debug/"
+                cp -a "Debug/uriparser.pdb" "$stage/lib/debug/"
+            popd
+
+            mkdir -p "build_release"
+            pushd "build_release"
+                # Invoke cmake and use as official build
+                cmake -E env CFLAGS="$archflags /Ob3 /GL /Gy /Zi" CXXFLAGS="$archflags /Ob3 /GL /Gy /Zi" LDFLAGS="/LTCG /OPT:REF /OPT:ICF /DEBUG:FULL" \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=ON \
+                    -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
+
+                cmake --build . --config Release --clean-first
+
+                # conditionally run unit tests
+                if [ "${DISABLE_UNIT_TESTS:-0}" = "0" ]; then
+                    ctest -C Release
+                fi
+
+                cp -a "Release/uriparser.dll" "$stage/lib/release/"
+                cp -a "Release/uriparser.lib" "$stage/lib/release/"
+                cp -a "Release/uriparser.exp" "$stage/lib/release/"
+                cp -a "Release/uriparser.pdb" "$stage/lib/release/"
+            popd
+
             cp -a include/uriparser/*.h "$stage/include/uriparser"
         ;;
 

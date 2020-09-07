@@ -110,7 +110,8 @@
           </map>
           <key>manifest</key>
           <array>
-            <string>lib/release/uriparser.lib</string>
+            <string>lib/debug/uriparser.*</string>
+            <string>lib/release/uriparser.*</string>
           </array>
           <key>name</key>
           <string>windows</string>
