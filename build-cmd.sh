@@ -265,7 +265,8 @@ pushd "$URIPARSER_SOURCE_DIR"
                 CFLAGS="$DEBUG_CFLAGS" \
                 CXXFLAGS="$DEBUG_CXXFLAGS" \
                 CPPFLAGS="$DEBUG_CPPFLAGS" \
-                    cmake ../ -G"Unix Makefiles" -DBUILD_SHARED_LIBS=FALSE -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
+                    cmake ../ -G"Unix Makefiles" -DCMAKE_BUILD_TYPE="Debug" -DBUILD_SHARED_LIBS=FALSE \
+                        -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
                         -DCMAKE_INSTALL_PREFIX="$stage"
 
                 make -j$JOBS
@@ -283,7 +284,8 @@ pushd "$URIPARSER_SOURCE_DIR"
                 CFLAGS="$RELEASE_CFLAGS" \
                 CXXFLAGS="$RELEASE_CXXFLAGS" \
                 CPPFLAGS="$RELEASE_CPPFLAGS" \
-                    cmake ../ -G"Unix Makefiles" -DBUILD_SHARED_LIBS=FALSE -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
+                    cmake ../ -G"Unix Makefiles" -DCMAKE_BUILD_TYPE="Release" -DBUILD_SHARED_LIBS=FALSE \
+                        -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
                         -DCMAKE_INSTALL_PREFIX="$stage"
 
                 make -j$JOBS
