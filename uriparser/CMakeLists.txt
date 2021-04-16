@@ -161,6 +161,11 @@ if(NOT MSVC)
     endif()
 endif()
 
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+  target_compile_options(uriparser PRIVATE /std:c++17 /permissive- /Z7 $<$<CONFIG:Release>:/Ob3> $<$<CONFIG:Release>:/Gy> $<$<EQUAL:${CMAKE_SIZEOF_VOID_P},4>:/arch:SSE2>)
+  target_link_options(uriparser PRIVATE /DEBUG:FULL $<$<CONFIG:Release>:/OPT:REF> $<$<CONFIG:Release>:/OPT:ICF>)
+endif()
+
 set_property(
     TARGET
         uriparser

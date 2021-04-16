@@ -58,9 +58,7 @@ pushd "$URIPARSER_SOURCE_DIR"
 
             mkdir -p "build_debug"
             pushd "build_debug"
-                # Invoke cmake and use as official build
-                cmake -E env CFLAGS="$archflags" CXXFLAGS="$archflags /std:c++17 /permissive-" LDFLAGS="/DEBUG:FULL" \
-                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=ON \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=OFF \
                     -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
 
                 cmake --build . --config Debug --clean-first
@@ -70,17 +68,12 @@ pushd "$URIPARSER_SOURCE_DIR"
                     ctest -C Debug
                 fi
 
-                cp -a "Debug/uriparser.dll" "$stage/lib/debug/"
                 cp -a "Debug/uriparser.lib" "$stage/lib/debug/"
-                cp -a "Debug/uriparser.exp" "$stage/lib/debug/"
-                cp -a "Debug/uriparser.pdb" "$stage/lib/debug/"
             popd
 
             mkdir -p "build_release"
             pushd "build_release"
-                # Invoke cmake and use as official build
-                cmake -E env CFLAGS="$archflags /Ob3 /GL /Gy /Zi" CXXFLAGS="$archflags /Ob3 /GL /Gy /Zi /std:c++17 /permissive-" LDFLAGS="/LTCG /OPT:REF /OPT:ICF /DEBUG:FULL" \
-                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=ON \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=OFF \
                     -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
 
                 cmake --build . --config Release --clean-first
@@ -90,10 +83,7 @@ pushd "$URIPARSER_SOURCE_DIR"
                     ctest -C Release
                 fi
 
-                cp -a "Release/uriparser.dll" "$stage/lib/release/"
                 cp -a "Release/uriparser.lib" "$stage/lib/release/"
-                cp -a "Release/uriparser.exp" "$stage/lib/release/"
-                cp -a "Release/uriparser.pdb" "$stage/lib/release/"
             popd
 
             cp -a include/uriparser/*.h "$stage/include/uriparser"
