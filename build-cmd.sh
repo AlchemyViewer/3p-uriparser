@@ -58,9 +58,7 @@ pushd "$URIPARSER_SOURCE_DIR"
 
             mkdir -p "build_debug"
             pushd "build_debug"
-                # Invoke cmake and use as official build
-                cmake -E env CFLAGS="$archflags" CXXFLAGS="$archflags /std:c++17 /permissive-" LDFLAGS="/DEBUG:FULL" \
-                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=ON \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=OFF \
                     -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
 
                 cmake --build . --config Debug --clean-first
@@ -70,17 +68,12 @@ pushd "$URIPARSER_SOURCE_DIR"
                     ctest -C Debug
                 fi
 
-                cp -a "Debug/uriparser.dll" "$stage/lib/debug/"
                 cp -a "Debug/uriparser.lib" "$stage/lib/debug/"
-                cp -a "Debug/uriparser.exp" "$stage/lib/debug/"
-                cp -a "Debug/uriparser.pdb" "$stage/lib/debug/"
             popd
 
             mkdir -p "build_release"
             pushd "build_release"
-                # Invoke cmake and use as official build
-                cmake -E env CFLAGS="$archflags /Ob3 /GL /Gy /Zi" CXXFLAGS="$archflags /Ob3 /GL /Gy /Zi /std:c++17 /permissive-" LDFLAGS="/LTCG /OPT:REF /OPT:ICF /DEBUG:FULL" \
-                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=ON \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=OFF \
                     -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
 
                 cmake --build . --config Release --clean-first
@@ -90,10 +83,7 @@ pushd "$URIPARSER_SOURCE_DIR"
                     ctest -C Release
                 fi
 
-                cp -a "Release/uriparser.dll" "$stage/lib/release/"
                 cp -a "Release/uriparser.lib" "$stage/lib/release/"
-                cp -a "Release/uriparser.exp" "$stage/lib/release/"
-                cp -a "Release/uriparser.pdb" "$stage/lib/release/"
             popd
 
             cp -a include/uriparser/*.h "$stage/include/uriparser"
@@ -108,23 +98,23 @@ pushd "$URIPARSER_SOURCE_DIR"
             rm "$stage/version"
 
             # Setup osx sdk platform
-            SDKNAME="macosx10.15"
+            SDKNAME="macosx"
             export SDKROOT=$(xcodebuild -version -sdk ${SDKNAME} Path)
             export MACOSX_DEPLOYMENT_TARGET=10.13
 
             # Setup build flags
             ARCH_FLAGS="-arch x86_64"
             SDK_FLAGS="-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET} -isysroot ${SDKROOT}"
-            DEBUG_COMMON_FLAGS="$ARCH_FLAGS $SDK_FLAGS -Og -g -msse4.2 -fPIC -DPIC"
-            RELEASE_COMMON_FLAGS="$ARCH_FLAGS $SDK_FLAGS -Ofast -ffast-math -flto -g -msse4.2 -fPIC -DPIC -fstack-protector-strong"
+            DEBUG_COMMON_FLAGS="$ARCH_FLAGS $SDK_FLAGS -O0 -g -msse4.2 -fPIC -DPIC"
+            RELEASE_COMMON_FLAGS="$ARCH_FLAGS $SDK_FLAGS -O3 -g -msse4.2 -fPIC -DPIC -fstack-protector-strong"
             DEBUG_CFLAGS="$DEBUG_COMMON_FLAGS"
             RELEASE_CFLAGS="$RELEASE_COMMON_FLAGS"
             DEBUG_CXXFLAGS="$DEBUG_COMMON_FLAGS -std=c++17"
             RELEASE_CXXFLAGS="$RELEASE_COMMON_FLAGS -std=c++17"
             DEBUG_CPPFLAGS="-DPIC"
             RELEASE_CPPFLAGS="-DPIC"
-            DEBUG_LDFLAGS="$ARCH_FLAGS $SDK_FLAGS -Wl,-headerpad_max_install_names -Wl,-macos_version_min,$MACOSX_DEPLOYMENT_TARGET"
-            RELEASE_LDFLAGS="$ARCH_FLAGS $SDK_FLAGS -Wl,-headerpad_max_install_names -Wl,-macos_version_min,$MACOSX_DEPLOYMENT_TARGET"
+            DEBUG_LDFLAGS="$ARCH_FLAGS $SDK_FLAGS -Wl,-headerpad_max_install_names"
+            RELEASE_LDFLAGS="$ARCH_FLAGS $SDK_FLAGS -Wl,-headerpad_max_install_names"
 
             mkdir -p "$stage/include/uriparser"
             mkdir -p "$stage/lib/debug"
@@ -136,15 +126,15 @@ pushd "$URIPARSER_SOURCE_DIR"
                 CXXFLAGS="$DEBUG_CXXFLAGS" \
                 CPPFLAGS="$DEBUG_CPPFLAGS" \
                 LDFLAGS="$DEBUG_LDFLAGS" \
-                cmake .. -GXcode -DBUILD_SHARED_LIBS=ON -DURIPARSER_BUILD_DOCS=OFF \
+                cmake .. -GXcode -DBUILD_SHARED_LIBS=OFF -DURIPARSER_BUILD_DOCS=OFF \
                     -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF \
                     -DCMAKE_C_FLAGS="$DEBUG_CFLAGS" \
                     -DCMAKE_CXX_FLAGS="$DEBUG_CXXFLAGS" \
                     -DCMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL="0" \
-                    -DCMAKE_XCODE_ATTRIBUTE_GCC_FAST_MATH=NO \
+                    -DCMAKE_XCODE_ATTRIBUTE_GCC_FAST_MATH=OFF \
                     -DCMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS=YES \
-                    -DCMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
-                    -DCMAKE_XCODE_ATTRIBUTE_LLVM_LTO=NO \
+                    -DCMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT=dwarf \
+                    -DCMAKE_XCODE_ATTRIBUTE_LLVM_LTO=OFF \
                     -DCMAKE_XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING=YES \
                     -DCMAKE_XCODE_ATTRIBUTE_CLANG_X86_VECTOR_INSTRUCTIONS=sse4.2 \
                     -DCMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD="c++17" \
@@ -162,7 +152,7 @@ pushd "$URIPARSER_SOURCE_DIR"
                     ctest -C Debug
                 fi
 
-                cp -a Debug/*.dylib* "$stage/lib/debug"
+                cp -a Debug/*.a* "$stage/lib/debug"
             popd
 
             mkdir -p "build_release"
@@ -171,15 +161,15 @@ pushd "$URIPARSER_SOURCE_DIR"
                 CXXFLAGS="$RELEASE_CXXFLAGS" \
                 CPPFLAGS="$RELEASE_CPPFLAGS" \
                 LDFLAGS="$RELEASE_LDFLAGS" \
-                cmake .. -GXcode -DBUILD_SHARED_LIBS=ON -DURIPARSER_BUILD_DOCS=OFF \
+                cmake .. -GXcode -DBUILD_SHARED_LIBS=OFF -DURIPARSER_BUILD_DOCS=OFF \
                     -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF \
                     -DCMAKE_C_FLAGS="$RELEASE_CFLAGS" \
                     -DCMAKE_CXX_FLAGS="$RELEASE_CXXFLAGS" \
-                    -DCMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL="fast" \
-                    -DCMAKE_XCODE_ATTRIBUTE_GCC_FAST_MATH=YES \
+                    -DCMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL="3" \
+                    -DCMAKE_XCODE_ATTRIBUTE_GCC_FAST_MATH=NO \
                     -DCMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS=YES \
-                    -DCMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
-                    -DCMAKE_XCODE_ATTRIBUTE_LLVM_LTO=YES \
+                    -DCMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT=dwarf \
+                    -DCMAKE_XCODE_ATTRIBUTE_LLVM_LTO=NO \
                     -DCMAKE_XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING=YES \
                     -DCMAKE_XCODE_ATTRIBUTE_CLANG_X86_VECTOR_INSTRUCTIONS=sse4.2 \
                     -DCMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD="c++17" \
@@ -198,17 +188,7 @@ pushd "$URIPARSER_SOURCE_DIR"
                     ctest -C Release
                 fi
 
-                cp -a Release/*.dylib* "$stage/lib/release"
-            popd
-
-            pushd "${stage}/lib/debug"
-                fix_dylib_id "liburiparser.dylib"
-                strip -x -S liburiparser.dylib
-            popd
-
-            pushd "${stage}/lib/release"
-                fix_dylib_id "liburiparser.dylib"
-                strip -x -S liburiparser.dylib
+                cp -a Release/*.a* "$stage/lib/release"
             popd
 
             cp -a include/uriparser/*.h "$stage/include/uriparser"
