@@ -100,7 +100,7 @@ pushd "$URIPARSER_SOURCE_DIR"
             # Setup osx sdk platform
             SDKNAME="macosx"
             export SDKROOT=$(xcodebuild -version -sdk ${SDKNAME} Path)
-            export MACOSX_DEPLOYMENT_TARGET=10.13
+            export MACOSX_DEPLOYMENT_TARGET=10.15
 
             # Setup build flags
             ARCH_FLAGS="-arch x86_64"
