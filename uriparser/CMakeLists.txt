@@ -38,14 +38,14 @@ cmake_minimum_required(VERSION 3.3)
 
 project(uriparser
     VERSION
-        0.9.5
+        0.9.6
     LANGUAGES
         C
 )
 
 # See https://verbump.de/ for what these numbers do
 set(URIPARSER_SO_CURRENT    1)
-set(URIPARSER_SO_REVISION  28)
+set(URIPARSER_SO_REVISION  29)
 set(URIPARSER_SO_AGE        0)
 
 include(CheckCCompilerFlag)
@@ -78,6 +78,11 @@ if(URIPARSER_BUILD_TOOLS AND NOT URIPARSER_BUILD_CHAR)
     message(SEND_ERROR "URIPARSER_BUILD_TOOLS=ON requires URIPARSER_BUILD_CHAR=ON.")
 endif()
 
+if(URIPARSER_BUILD_TESTS)
+    # We have to call enable_language() before modifying any CMAKE_CXX_* variables
+    enable_language(CXX)
+endif()
+
 macro(uriparser_apply_msvc_runtime_to ref)
     string(REGEX REPLACE "/M[DT]d?" ${URIPARSER_MSVC_RUNTIME} ${ref} "${${ref}}")
 endmacro()
@@ -103,17 +108,6 @@ check_c_compiler_flag("-fvisibility=hidden" URIPARSER_COMPILER_SUPPORTS_VISIBILI
 if(URIPARSER_COMPILER_SUPPORTS_VISIBILITY)
     set(URIPARSER_EXTRA_COMPILE_FLAGS "${URIPARSER_EXTRA_COMPILE_FLAGS} -fvisibility=hidden")
 endif()
-
-if(URIPARSER_WARNINGS_AS_ERRORS)
-    if(MSVC)
-        add_definitions(/WX)
-    else()
-        set(URIPARSER_EXTRA_COMPILE_FLAGS "${URIPARSER_EXTRA_COMPILE_FLAGS} -Werror")
-    endif()
-endif()
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${URIPARSER_EXTRA_COMPILE_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${URIPARSER_EXTRA_COMPILE_FLAGS}")
 
 #
 # config.h
@@ -264,8 +258,6 @@ endif()
 # C++ test runner
 #
 if(URIPARSER_BUILD_TESTS)
-    enable_language(CXX)
-
     if(MSVC AND URIPARSER_MSVC_RUNTIME)
         uriparser_apply_msvc_runtime_to(CMAKE_CXX_FLAGS)
         uriparser_apply_msvc_runtime_to(CMAKE_CXX_FLAGS_DEBUG)
@@ -291,6 +283,7 @@ if(URIPARSER_BUILD_TESTS)
     target_compile_definitions(testrunner PRIVATE URI_STATIC_BUILD)
 
     if(MSVC)
+        target_compile_definitions(testrunner PRIVATE -D_CRT_NONSTDC_NO_WARNINGS)
         target_compile_definitions(testrunner PRIVATE -D_CRT_SECURE_NO_WARNINGS)
     endif()
 
@@ -316,15 +309,35 @@ if(URIPARSER_BUILD_TESTS)
         target_compile_options(testrunner PRIVATE /EHsc)
     endif()
 
+    if(MINGW)
+        set(_URIPARSER_TEST_COMMAND wine testrunner)
+    else()
+        set(_URIPARSER_TEST_COMMAND      testrunner)
+    endif()
+
     add_test(
         NAME
             test
         COMMAND
-            testrunner
+            ${_URIPARSER_TEST_COMMAND}
     )
 
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
 endif()
+
+#
+# Compiler flags
+#
+if(URIPARSER_WARNINGS_AS_ERRORS)
+    if(MSVC)
+        add_definitions(/WX)
+    else()
+        set(URIPARSER_EXTRA_COMPILE_FLAGS "${URIPARSER_EXTRA_COMPILE_FLAGS} -Werror")
+    endif()
+endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${URIPARSER_EXTRA_COMPILE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${URIPARSER_EXTRA_COMPILE_FLAGS}")
 
 #
 # Doxygen API documentation
@@ -428,6 +441,18 @@ uriparser_install(
 # pkg-config file
 #
 if(NOT MSVC)
+    if(CMAKE_INSTALL_LIBDIR MATCHES "^/")
+        set(_URIPARSER_PKGCONFIG_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+    else()
+        set(_URIPARSER_PKGCONFIG_LIBDIR "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
+
+    if(CMAKE_INSTALL_INCLUDEDIR MATCHES "^/")
+        set(_URIPARSER_PKGCONFIG_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+    else()
+        set(_URIPARSER_PKGCONFIG_INCLUDEDIR "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+    endif()
+
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/liburiparser.pc.in liburiparser.pc @ONLY)
     uriparser_install(
         FILES
