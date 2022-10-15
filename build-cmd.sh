@@ -58,7 +58,7 @@ pushd "$URIPARSER_SOURCE_DIR"
 
             mkdir -p "build_debug"
             pushd "build_debug"
-                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=OFF \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" .. -DBUILD_SHARED_LIBS=OFF \
                     -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
 
                 cmake --build . --config Debug --clean-first
@@ -73,7 +73,7 @@ pushd "$URIPARSER_SOURCE_DIR"
 
             mkdir -p "build_release"
             pushd "build_release"
-                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" -T host="$AUTOBUILD_WIN_VSHOST" .. -DBUILD_SHARED_LIBS=OFF \
+                cmake -G "$AUTOBUILD_WIN_CMAKE_GEN" -A "$AUTOBUILD_WIN_VSPLATFORM" .. -DBUILD_SHARED_LIBS=OFF \
                     -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF -DURIPARSER_BUILD_TOOLS=OFF
 
                 cmake --build . --config Release --clean-first
@@ -310,8 +310,6 @@ pushd "$URIPARSER_SOURCE_DIR"
             DEBUG_CPPFLAGS="-DPIC"
             RELEASE_CPPFLAGS="-DPIC -D_FORTIFY_SOURCE=2"
         
-            JOBS=`cat /proc/cpuinfo | grep processor | wc -l`
-
             # Handle any deliberate platform targeting
             if [ -z "${TARGET_CPPFLAGS:-}" ]; then
                 # Remove sysroot contamination from build environment
@@ -331,13 +329,11 @@ pushd "$URIPARSER_SOURCE_DIR"
                         -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
                         -DCMAKE_INSTALL_PREFIX="$stage"
 
-                make -j$JOBS
+                make -j$AUTOBUILD_CPU_COUNT
                 make install
 
                 mkdir -p ${stage}/lib/debug
                 mv ${stage}/lib/*.a ${stage}/lib/debug
-                mkdir -p ${stage}/lib/debug/pkgconfig
-                cp $top/pkgconfig/liburiparser-debug.pc ${stage}/lib/debug/pkgconfig/liburiparser.pc
             popd
 
             # Release
@@ -350,13 +346,11 @@ pushd "$URIPARSER_SOURCE_DIR"
                         -DURIPARSER_BUILD_TESTS=FALSE -DURIPARSER_BUILD_DOCS=FALSE -DURIPARSER_BUILD_TOOLS=FALSE \
                         -DCMAKE_INSTALL_PREFIX="$stage"
 
-                make -j$JOBS
+                make -j$AUTOBUILD_CPU_COUNT
                 make install
 
                 mkdir -p ${stage}/lib/release
                 mv ${stage}/lib/*.a ${stage}/lib/release
-                mkdir -p ${stage}/lib/release/pkgconfig
-                cp $top/pkgconfig/liburiparser-release.pc ${stage}/lib/release/pkgconfig/liburiparser.pc
             popd
         ;;
     esac
