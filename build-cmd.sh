@@ -62,10 +62,10 @@ pushd "$URIPARSER_SOURCE_DIR"
                     ctest -C Release
                 fi
 
+                cp -a "Debug/uriparser.lib" "$stage/lib/debug/"
                 cp -a "Release/uriparser.lib" "$stage/lib/release/"
             popd
 
-            cp -a "Debug/uriparser.lib" "$stage/lib/debug/"
             cp -a include/uriparser/*.h "$stage/include/uriparser"
         ;;
 
